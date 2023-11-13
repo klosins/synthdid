@@ -10,7 +10,8 @@ panel.matrices(
   time = 2,
   outcome = 3,
   treatment = 4,
-  treated.last = TRUE
+  treated.last = TRUE,
+  covar = NULL
 )
 }
 \arguments{
