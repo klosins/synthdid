@@ -49,9 +49,11 @@ pairwise.sum.decreasing = function(x, y) {
 #' }
 #'
 #' @export
-panel.matrices = function(panel, unit = 1, time = 2, outcome = 3, treatment = 4, treated.last = TRUE) {
-  # TODO: add support for covariates X, i.e. could keep all other columns
-  keep = c(unit, time, outcome, treatment)
+panel.matrices = function(panel, unit = 1, time = 2, outcome = 3,
+                          treatment = 4, treated.last = TRUE, covar = NULL) {
+
+  # for covars, you feed a character vector with covariate names
+  keep = c(unit, time, outcome, treatment, covar)
   if (!all(keep %in% 1:ncol(panel) | keep %in% colnames(panel))) {
     stop("Column identifiers should be either integer or column names in `panel`.")
   }
@@ -60,7 +62,9 @@ panel.matrices = function(panel, unit = 1, time = 2, outcome = 3, treatment = 4,
   time = index.to.name(time)
   outcome = index.to.name(outcome)
   treatment = index.to.name(treatment)
-  keep = c(unit, time, outcome, treatment)
+
+  keep = c(unit, time, outcome, treatment, covar)
+
 
   panel = panel[keep]
   if (!is.data.frame(panel)){
@@ -100,7 +104,16 @@ panel.matrices = function(panel, unit = 1, time = 2, outcome = 3, treatment = 4,
   }
 
   unit.order = if(treated.last) { order(W[,T0+1], rownames(Y)) } else { 1:nrow(Y) }
-  list(Y = Y[unit.order, ], N0 = N0, T0 = T0, W = W[unit.order, ])
+
+  # covariates
+  X <- array(0, dim = c(dim(Y), length(covar)))
+  for (i in 1:length(covar)){
+    X[,,i] <- matrix(panel[, covar[i]], num.units, num.years,
+                     byrow = TRUE, dimnames = list(unique(panel[,unit]),
+                     unique(panel[,time])))[unit.order, ]
+  }
+
+  list(Y = Y[unit.order, ], N0 = N0, T0 = T0, W = W[unit.order, ], X = X)
 }
 
 #' Get timesteps from panel matrix Y
